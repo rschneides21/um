@@ -1,0 +1,12 @@
+add.um
+divide.um
+multiply.um
+bitwise_NAND.um
+load_program.um
+map_segment.um
+unmap_segment.um
+conditional_move.um
+halt.um
+print_digit.um
+segmented_load.um
+segmented_store.um

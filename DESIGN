@@ -1,0 +1,286 @@
+Comp40 HW6 Design Doc
+Matthew Epstein <mepste03>
+Ryan Scheinderman <rschne01>
+
+
+Design for Overall Program:
+
+11.  What are the major components of your program, and what are their 
+     interfaces? Components include functions as well as abstract data types. 
+     An interface includes contracts as well as function prototypes.
+     
+     Our program will be divided up into six main components as follows (NOTE: 
+     all functions within each module are defined in more detail below):
+
+     Our main function will create a memory struct (called Mem_T) which will 
+     serve as the primary data structure for our memory storage.  This struct 
+     will hold two sequences: one will contain the sequence of 32-bit words for
+     our memory, and one will keep track of reusable segment locations in the 
+     first memory sequence (this will become important when we map and 
+     unmap).  The Mem_new function takes in a file pointer and in addition to 
+     creating the struct, it will store the words from the file into segment 
+     0. (If the user does not wish to store words into the memory sequence, he 
+     may pass in NULL). 
+
+    Our execute module will contain the majority of our code.  In the module, 
+    the execute() function will construct an array of eight integers that will 
+    store each of the eight registers. The function will then enter a while 
+    loop which will run until all of the instructions contained in segment 0 
+    have been carried out. At the end of each iteration, the program counter 
+    (represented as an integer) will be incremented. Using the get_word 
+    function from the memAccess module, the program will get a 32-bit word from
+    segment 0 with an offset determined by the program counter.  execute() will
+    then call on the decode module which will extract the word’s opcode, any 
+    necessary registers, and the 25-bit value, if needed.  Using this 
+    information, the function will then execute one of the thirteen 
+    instructions enumerated in the spec.  If the instruction involves modifying
+    memory (eg. segmented load, segmented store, map segment, unmap segment, or
+    load program), memAccess is used.  Otherwise, the instruction is completed 
+    within execute().
+                     void execute(Mem_T *memory);
+
+    Our decode module is called upon to extract necessary information from a 
+    word.  decode uses the Bitpack module (specifically the Bitpack_getu() 
+    function) to extract the requested bits.
+                    int decode_register(unit32_t word, int offset);
+                    int decode_opcode(uint32_t word);
+                    int decode_value(uint32_t word);
+
+    The Bitpack module will remain unchanged, except we will modify it to work 
+    for 32-bit words.  The only function we will call will be Bitpack_getu().
+         uint32_t Bitpack_getu(uint32_t word, unsigned width, unsigned lsb);
+
+    The memAccess module defines a Mem_T struct which contains two sequences: 
+    one to represent memory and another to keep track which segment indices can
+    be reused. The memory sequence contains segments which are represented 
+    as Hanson Seq_Ts that contain words represented as uint32_ts.  memAccess is
+    the only module with direct access to the segments stored within the memory
+    sequence.  Any other function that wishes to modify a word or segment from 
+    the memory sequence must call on a function in memAccess. Again, memAccess 
+    is the only module which knows this implementation.  memAccess also 
+    contains the functions that execute() will call for instructions that wish
+    to modify memory and that readProgram() will call to append a word onto a 
+    sequence.
+            void putWord(uint32_t word, Mem_T *memory, int segIndex);
+            unit32_t getWord(Mem_T *memory, int segIndex, int offset);
+            void map_segment(int numWords, Mem_T *memory);
+            void unmap_segment(Mem_T *memory, int segIndex);
+            void load_program(Mem_t *memory, int segIndex);
+
+12.  How do the components in your program interact? That is, what is the 
+architecture of your program? 
+
+The overall architecture is below.  For a more detailed description of what 
+each module does and how they interact, see question 11. 
+
+Main file--
+          |
+          v
+    Client to memAccess module
+    Client to execute module
+                |
+                v
+        Client to memAccess module         
+        Client to decode module
+                     |
+                     v
+        Client to Bitpack module
+
+
+13. What test cases will you use to convince yourself that your program works?
+
+Test Mem_new() by passing in:
+    A valid (binary) file pointer
+    An invalid (non-binary) file pointer
+    NULL
+Test map_segment() by passing in:
+    A Mem_T whose reuseable_indices sequence is empty.  Should simply
+    Seq_addhi() to the segment sequence.
+    A Mem_T whose reuseable_indices sequence is not empty.  Should call
+    seq_remlo() on the reuseable_indices sequence and use the return value as
+    the index for which Seq_put() will insert a new segment.
+    A Mem_T whose reuseable_indices sequence contains a negative value in its
+    first location.  Should exit with a CRE.
+Test get_word() and put_word() by:
+    Passing in an invalid segment index and/or an invalid offset.  For both
+    functions the segment index must map to a mapped segment; for get_word(),
+    the offset must also map to a mapped word.  In the case of a failure,
+    should exit with a CRE.
+    Putting in a word using put_word() and then immediately retrieving that 
+    word using get_word().  The original and returned words should be 
+    identical.
+Test unmap_segment() and load_program() by passing in:
+    A segment index which does not map to a mapped segment.  Should exit with a
+    CRE.
+    A valid segment index and then calling get_word().  If get_word()’s segment
+    index is the same as that of the original segment, the program should exit
+    with a CRE.
+
+
+14. What arguments will you use to convince a skeptical audience that your
+program works?
+
+First we would demonstrate that each one of our individual modules works
+correctly.  The modules are small and are therefore easier to understand and
+conceptualize.  We would then explain the overall architecture of the program
+and how the modules each interact with one another.  Since our program is
+primarily made up of the modules, once a person is convinced that the modules
+work and that they interact with each other in a sensible manner it should not
+be hard to understand how the entire program will run and to have confidence in
+its effectiveness.    
+
+
+
+Design for Individual Modules:
+
+execute
+2. What functions will you offer, and what are the contracts those functions
+must meet?
+    void execute(Mem_T *memory);
+    This function is called by main().  It retrieves words from segment 0,
+    decodes it, and calls the appropriate instruction command.
+
+
+4. What representation will you use, and what invariants will it satisfy?
+
+    Representations:
+    The only representation specific to the execute module is an array of eight
+    integers with each element containing the value of the register associated
+    with each index (eg. the 4th element in the array will correspond to
+    register 4).
+
+    Invariants:
+    execute will read in words from segment 0 and do the appropriate 
+    instruction sequentially (i.e. the first word in the segment will be read 
+    in first, then the second word, etc.)
+    It is an error for segment 0 to not be already mapped upon entering into 
+    the execute module.
+    It is an error for the program counter to point outside of the bounds of
+    segment 0.
+    It is an error for the opcode to be less than 0 or greater than 13.
+    It is an error for any instruction to output a value larger than 255.
+
+
+5. How does an object in your representation correspond to an object in the
+   world of ideas?
+
+    The array of integers corresponds to the registers found in a computer.
+    Additionally, the loop found in the execute function represents the
+    instruction cycle.
+
+
+7. What programming idioms will you need?
+    Bitwise logical operations (specifically & and ~ for the bitwise
+    nand operation)
+    Arrays
+    Hanson assertions
+    Structs
+
+
+
+decode
+2. What functions will you offer, and what are the contracts those functions
+must meet?
+    int decode_register(unit32_t word, int offset);
+    This function will take in a 32-bit word and an integer that is between 0
+    and 29 (inclusive).  It will return an integer that represents the desired
+    register.
+
+    int decode_opcode(uint32_t word);
+    This function will take in a 32-bit word and return the first four bits 
+    (the opcode) represented as an integer.  The opcode is always represented 
+    in the same place in the word, so no offset parameter is required.
+
+    int decode_value(uint32_t word);
+    This function will take in a 32-bit word and return the 25 bits that
+    represent the word’s value.  Like the opcode, the value is always
+    represented in the same place in the word, so no offset parameter is
+    required.
+
+
+4. What representation will you use, and what invariants will it satisfy?
+    Representations:
+    Each word is represented as a uint32_t and all return values--whether or 
+    not the function returns a representation of a register, an opcode, or a
+    value--will be integers.
+
+    Invariants:
+    The functions in this module are quite straightforward.  The only invariant
+    is the parameter restriction for decode_register.
+
+5. How does an object in your representation correspond to an object in the
+   world of ideas?
+    This module deals specifically with the opcode, the registers, and the
+    25-bit value.  Each of those ideas represents a specific purpose within the
+    overall program which translates well into the world of ideas (eg. the 
+    three bits that indicate a register translate to one of eight registers in 
+    our program).
+
+7. What programming idioms will you need?
+    Bitwise shifting and logical operations (eg. <<, >>, |, &, etc.)
+    Hanson assertions
+
+
+
+memAccess
+2. What functions will you offer, and what are the contracts those functions 
+    must meet?
+
+    Mem_T Mem_new(FILE *input);
+    Returns an initialized Mem_T struct.  Used in main() to create the memory
+    and fills segment 0 with the words loaded in from the input file.
+
+    void putWord(uint32_t word, Mem_T memory);
+    Adds a word to the end of a segment.  This function is used to put 32-bit
+    words into segment 0 during readProgram().  It is an error for segment 0 to
+    be empty.
+
+    unit32_t getWord(Mem_T memory, int segIndex, int offset);
+    Retrieves a word from memory from the specified index and offset.  It is a
+    error if either segIndex does not already contain a sequence or if the
+    offset is out of bounds.
+
+    int map_segment(int numWords, Mem_T memory);
+    Adds a segment to memory with numWords words. Returns the segment index
+    (i.e. where the function decided to store the segment in memory)
+
+    void unmap_segment(Mem_T memory, int segIndex);
+    Removes a segment from memory at the specified index and frees the data. It
+    is an error for there to be no pre-existing sequence in segIndex or for
+    segIndex to equal 0.
+
+    void load_program(Mem_t memory, int segIndex);
+    Puts the segment located at segIndex into segment 0 and frees the data in
+    segment 0.  It is an error for there to be no pre-existing sequence in
+    segIndex.
+
+4. What representation will you use, and what invariants will it satisfy?
+    Representations:
+    Each word is represented as a uint32_t, each segment is represented as a
+    sequence, and memory as a whole is represented as a structure called Mem_T
+    which contains a sequence that represents the structure of memory, and a
+    sequence that records which segment indices can be reused.  memAccess is 
+    the only module which knows how segments are represented.  Any other module
+    that wishes to access or modify memory must call on a function in this 
+    module.
+
+    Invariants:
+    memAccess may never reveal the “secret” of segment representation to 
+    another module.
+    Each of the parameter restrictions described above must always be valid.
+    If the available_indices sequence is empty, that means that the next word
+    will be placed at the end of the memory sequence.
+
+5. How does an object in your representation correspond to an object in the
+   world of ideas?
+    This module deals specifically with memory retrieval and modification.  As
+    this is a huge topic in computer science and something that all computers
+    must be capable of, this module is very applicable to the real world. A 
+    Mem_T represents the physical memory in a machine.
+
+7. What programming idioms will you need?
+    Hanson sequences
+    Hanson assertions
+    Structs
+
+

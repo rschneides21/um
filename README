@@ -1,0 +1,69 @@
+Comp40 HW6 README
+
+1.  Programmers: Matthew Epstein <mepste03> and Ryan Schneiderman <rschne01>
+2.  Thank you to the Comp40 department for the project specifications and to a
+        number of the TAs for their help.
+3.  To the best of our knowledge, our UM has been correctly implemented and
+        runs as expected.
+4.  The biggest change between our ultimate submission and our initial design
+    was that we moved the definition of our memory struct from the memory.h
+    file into the memory.c file and put a typedef for the memory struct in the
+    memory.h file.
+5.  Our main function opens a file and calls upon the execute module.  The
+    execute module uses the decode and memory modules in order to execute the
+    provided instruction.  decode uses the 32Bitpack module to return
+    informationregarding the opcode, registers, and--when needed--the value.  
+    The memory module, on the other hand, is called whenever an instruction 
+    needs to access or modify memory.  As such, memory is the only module that 
+    knows about the memory implementation.
+6.  Our UM executes 50 million instructions in approximately 5 seconds.
+    To obtain this figure, we ran midmark.um with a counter and learned that
+    midmark performs a total of 85070522 instructions.  We then timed how long
+    our UM takes to run midmark (without the counter) which gave us a value of
+    around 8.5 seconds.  We then did some basic math to obtain our result.
+7.  halt.um:  Simply calls the halt instruction.  No output is expected.
+    add.um:  Loads two values into separate registers, adds them, and prints
+    the result.
+    multiply.um:  Loads two values into separate registers, multiplies them,
+    and prints the result.
+    divide.um:  Loads two values into separate registers, divides them, and
+    prints the result.
+    print_digit.um:  Loads two values into separate registers, adds them, and
+    prints the result.
+    bitwise_NAND.um:  Loads two values into separate registers and NANDs them.
+    The result is then manipulated using the multiply, divide, and load value
+    instructions so that the ultimate result falls between 0 and 255 and can be
+    printed as a char.
+    map_segment.um:  Maps a segment and then uses the load value and multiply
+    instructions to manipulate the map_segment’s return value so that the final
+    result falls between 0 and 255 and can be printed as a char.
+    unmap_segment.um:  Tests unmap_segment by mapping a number of segments,
+    unmapping one of them, and then mapping again.  We can ensure that
+    unmap_segment works if map_segment’s return value is equal to the argument
+    passed to unmap_segment.  With the help of the load value and multiply
+    instructions, we manipulate map_segment’s return value so that the
+    final result falls between 0 and 255 and can be printed as a char.
+    segmented_store.um:  A value is inputted and loaded into a register.  That
+    value is then stored in a segment using segmented_store and retrieved using
+    segmented_load.  The returned value ought to be the same as the original
+    input and by printing the result we can determine that this is indeed the
+    case.
+    segmented_load.um:  This test works very similarly to the segmented_store
+    test in that it stores a values and then returns it before ultimately
+    printing it.  The biggest difference is that the segmented_store test
+    receives its values through input while the segmented_load test receives
+    its values with load value.
+    conditional_move.um:  Tests the conditional move instruction by loading two
+    non-zero values into separate registers.  After calling the conditional
+    move instruction, the program prints the value in the register that the
+    original value was moved to.
+    load_program.um:  Tests load_program by mapping a number of segments and
+    storing a value into a segment that is not segment 0 at a specific offset.
+    The test then calls load program on that segment and uses segmented_load to
+    retrieve the value in segment 0 at that offset.  That value is printed and
+    if it is the same as the value stored in the original segment, then the
+    load_program function must work.
+8.  We spent three hours analyzing the assignment.
+9.  We spent five hours preparing the assignment.
+10. We spent twenty-five hours solving the problems in the assignment.
+
