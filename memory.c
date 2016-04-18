@@ -83,7 +83,7 @@ void MemT_free(Mem_T memory){
                         Seq_free(&segment);
         }
         Seq_free(&(memory->segment_seq));
-        Seq_free(&(memory->reusable_indices));
+        Seq_free(&(memory->reusable_indices));        
         free(memory);
 }
 
@@ -188,7 +188,6 @@ void load_program(Mem_T memory, unsigned segIndex)
         }
         Seq_T old_program = Seq_put(memory->segment_seq, 0, program_to_load);
         Seq_free(&old_program);
-        Seq_free(&program_to_load_temp);
 }
 
 /* 
