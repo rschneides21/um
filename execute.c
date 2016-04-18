@@ -11,9 +11,9 @@
  */
 
 #include "execute.h"
-#include "memory.h"
 #include "decode.h"
 #include "assert.h"
+#include "opmemory.h"
 
 typedef enum opcodes {CONDITIONAL_MOVE = 0, SEGMENTED_LOAD, SEGMENTED_STORE, 
                         ADDITION, MULTIPLICATION, DIVISION, BITWISE_NAND, HALT,
@@ -95,21 +95,24 @@ void execute(Mem_T memory){
 
                         case INPUT:
                                 input = getchar();
-                                assert(input >=0 && input <= 255);
                                 if(input == EOF) {
                                         uint32_t endInput = ~0;
                                         regs[regC] = endInput;
                                 } else {
-                                        regs[regC] = input;
+                                    assert(input >=0 && input <= 255);
+                                    regs[regC] = input;
                                 }
                                 break;
                                 
                         case LOAD_PROGRAM:
                                 if(regs[regB] != 0){
+                                        fprintf(stderr, "loading into segment 0\n");
                                         load_program(memory, regs[regB]);
                                 }
+                                //fprintf(stderr, "test");
                                 programCounter = regs[regC];
                                 programLength = get_segment_length(memory, 0);
+                                //fprintf(stderr, "program length: %u\n", programLength);
                                 break;
 
                         case LOAD_VALUE:

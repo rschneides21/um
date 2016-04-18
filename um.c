@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "execute.h"
-#include "memory.h" 
+#include "opmemory.h" 
 
 
 int main(int argc, char *argv[]){

@@ -11,9 +11,10 @@
  *      By:           Ryan Schneiderman and Matthew Epstein
  */
 
-#include "memory.h"
+#include "opmemory.h"
 #include "decode.h"
-
+#include "seg.h"
+#include "seq.h"
 
 struct Mem_T {
         Seq_T segment_seq;
@@ -55,6 +56,7 @@ Mem_T Mem_new(FILE *input)
                 fprintf(stderr, "Reading error\n");
         }
 
+
         /* Program index will be 0*/
         int programIndex = map_segment(memory, buffer_size);
 
@@ -79,9 +81,9 @@ Mem_T Mem_new(FILE *input)
 void MemT_free(Mem_T memory){
         int length = Seq_length(memory->segment_seq);
         for(int i = 0; i < length; i++){
-                Seq_T segment = Seq_get(memory->segment_seq, i);
+                Seg_T segment = Seq_get(memory->segment_seq, i);
                 if(segment != NULL)
-                        Seq_free(&segment);
+                        Seg_free(segment);
         }
         Seq_free(&(memory->segment_seq));
         Seq_free(&(memory->reusable_indices));        
@@ -99,11 +101,11 @@ void MemT_free(Mem_T memory){
 void store_word(Mem_T memory, uint32_t word, unsigned segIndex, unsigned 
                                                                         offset)
 {       
-        Seq_T segment = (Seq_T)Seq_get(memory->segment_seq, segIndex);
+        Seg_T segment = (Seg_T)Seq_get(memory->segment_seq, segIndex);
 
         assert(segment != NULL);
 
-        Seq_put(segment, offset, (void *)(uintptr_t)word);
+        Seg_store(segment, offset, word);
         Seq_put(memory->segment_seq, segIndex, segment);
 }
 
@@ -114,11 +116,11 @@ void store_word(Mem_T memory, uint32_t word, unsigned segIndex, unsigned
  */  
 uint32_t load_word(Mem_T memory, unsigned segIndex, unsigned offset)
 {
-        Seq_T segment = (Seq_T)Seq_get(memory->segment_seq, segIndex);
+        Seg_T segment = (Seg_T)Seq_get(memory->segment_seq, segIndex);
 
         assert(segment != NULL);
 
-        uint32_t word = (uint32_t)(uintptr_t)Seq_get(segment, offset);
+        uint32_t word = Seg_load(segment, offset);
         return word;
 }
 
@@ -139,12 +141,7 @@ int map_segment(Mem_T memory, unsigned numWords)
         }
         else segIndex = Seq_length(memory->segment_seq);
 
-        Seq_T segment = Seq_new(numWords);
-        uint32_t initializer = 0;
-
-        for(unsigned i = 0; i < numWords; i++){
-                Seq_addhi(segment, (void *)(uintptr_t)initializer);
-        }
+        Seg_T segment = Seg_new(numWords);
 
         if(reusedTest) {
                 Seq_put(memory->segment_seq, segIndex, segment);
@@ -163,9 +160,13 @@ int map_segment(Mem_T memory, unsigned numWords)
  */
 void unmap_segment(Mem_T memory, unsigned segIndex)
 {
-        Seq_T unmapped_segment = Seq_put(memory->segment_seq, segIndex, NULL);
-        Seq_free(&unmapped_segment);
+        Seg_T unmapped_segment = Seq_put(memory->segment_seq, segIndex, NULL);
+        Seg_free(unmapped_segment);
         Seq_addhi(memory->reusable_indices, (void *)(intptr_t)segIndex);
+}
+
+static inline void print_segment0(Mem_T memory){
+        print_segment(Seq_get(memory->segment_seq, 0));
 }
 
 /* 
@@ -177,18 +178,19 @@ void unmap_segment(Mem_T memory, unsigned segIndex)
 void load_program(Mem_T memory, unsigned segIndex)
 {
         /*Segment that will become new program*/
-        Seq_T program_to_load_temp = Seq_get(memory->segment_seq, segIndex);
-
-        int length = Seq_length(program_to_load_temp);
-
-        /*New sequence that will be put in segment 0*/
-        Seq_T program_to_load = Seq_new(length);
+        Seg_T program_to_load = Seq_get(memory->segment_seq, segIndex);
+       // print_segment(program_to_load);
+       // fprintf(stderr, "\n");
+        Seg_T duplicate_segment = Seg_duplicate(program_to_load);
         /*Copies program_to_load_temp to program_to_load*/
-        for(int i = 0; i < length; i++) {
-                Seq_addhi(program_to_load, Seq_get(program_to_load_temp, i));
-        }
-        Seq_T old_program = Seq_put(memory->segment_seq, 0, program_to_load);
-        Seq_free(&old_program);
+        //print_segment(duplicate_segment);
+        //fprintf(stderr, "\n");
+
+        Seg_T old_program = Seq_put(memory->segment_seq, 0, duplicate_segment);
+
+       // print_segment0(memory);
+        Seg_free(old_program);
+        //fprintf(stderr, "after free");
 }
 
 /* 
@@ -200,7 +202,8 @@ void load_program(Mem_T memory, unsigned segIndex)
 int get_segment_length(Mem_T memory, unsigned segIndex)
 {
         assert(segIndex < (unsigned)Seq_length(memory->segment_seq));
-        int returnVal = Seq_length(Seq_get(memory->segment_seq, segIndex));
+        int returnVal = Seg_length(Seq_get(memory->segment_seq, segIndex));
         return returnVal;
 }
+
 

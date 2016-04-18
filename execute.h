@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "memory.h"
+#include "opmemory.h"
 
 void execute(Mem_T memory);
 
