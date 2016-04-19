@@ -34,7 +34,8 @@ int decode_register(uint32_t word, int offset)
  */
 int decode_opcode(uint32_t word)
 {
-        int opcode = Bitpack_getu(word, OPCODE_WIDTH, 28);
+        uint32_t mask = word & 0xf0000000;
+        int opcode = mask / 0x10000000;
         return opcode;
 }
 
