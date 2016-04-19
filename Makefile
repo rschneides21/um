@@ -24,7 +24,7 @@ LDFLAGS = -g -L/comp/40/lib64 -L/usr/sup/cii40/lib64
 # Libraries needed for linking
 # All programs cii40 (Hanson binaries) and *may* need -lm (math)
 # arith40 is a catch-all for this assignment, netpbm is needed for pnm
-LDLIBS = -lcii40-O2 -larith40 -l40locality -lnetpbm -lcii40 -lm -lrt 
+LDLIBS = -lcii40-O2 -larith40 -l40locality -lnetpbm -lm -lrt 
 
 # Collect all .h files in your directory.
 # This way, you can never forget to add
@@ -50,7 +50,7 @@ all: um
 
 ## Linking step (.o -> executable program)
 
-um: decode.o 32bitpack.o seg.o opmemory.o execute.o um.o 
+um: decode.o 32bitpack.o mem_arr.o seg.o opmemory.o execute.o um.o 
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 clean:
