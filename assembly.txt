@@ -698,6 +698,15 @@ Disassembly of section .text:
   401119:	e9 32 f9 ff ff       	jmpq   400a50 <free@plt>
   40111e:	66 90                	xchg   %ax,%ax
 
+void store_word(Mem_T memory, uint32_t word, unsigned segIndex, unsigned 
+                                                                        offset)
+{       
+        Seg_T segment = Mem_arr_get(memory->segment_seq, segIndex);
+
+        Seg_store(segment, offset, word);
+        Mem_arr_put(memory->segment_seq, segment, segIndex);
+}
+
 0000000000401120 <store_word>:
   401120:	41 56                	push   %r14
   401122:	41 89 ce             	mov    %ecx,%r14d

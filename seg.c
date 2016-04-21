@@ -49,3 +49,8 @@ void print_segment(Seg_T segment){
 		fprintf(stderr, "word is: %x\n", segment->arr[i]);
 	}
 }
+
+uint32_t *Seg_to_arr(Seg_T segment){
+	return segment->arr;
+}
+

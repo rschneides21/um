@@ -14,6 +14,7 @@
 #include "flip_word.h"
 #include "assert.h"
 #include "opmemory.h"
+#include "seg.h" 
 
 typedef enum opcodes {CONDITIONAL_MOVE = 0, SEGMENTED_LOAD, SEGMENTED_STORE, 
                         ADDITION, MULTIPLICATION, DIVISION, BITWISE_NAND, HALT,
@@ -103,6 +104,7 @@ void execute(Mem_T memory){
 
         uint32_t regs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
         unsigned regA, regB, regC;
+        
         while(programCounter < programLength) {
                 word = load_word(memory, 0, programCounter);
                 unsigned opcode = decode_opcode(word);
@@ -172,11 +174,11 @@ void execute(Mem_T memory){
                                 
                         case LOAD_PROGRAM:
                                 if(regs[regB] != 0){
-                                        fprintf(stderr, "loading into segment 0\n");
                                         load_program(memory, regs[regB]);
+                                        programLength = get_segment_length(memory, 0);
                                 }
+
                                 programCounter = regs[regC];
-                                programLength = get_segment_length(memory, 0);
                                 break;
 
                         case LOAD_VALUE:

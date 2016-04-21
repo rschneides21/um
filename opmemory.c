@@ -3,7 +3,6 @@
 #include "opmemory.h"
 #include "decode.h"
 #include "seg.h"
-#include "seq.h"
 #include "mem_arr.h"
 #include "stack.h"
 #include "stdbool.h" 
@@ -112,7 +111,6 @@ uint32_t load_word(Mem_T memory, unsigned segIndex, unsigned offset)
  */
 int map_segment(Mem_T memory, unsigned numWords)
 {
-
         unsigned segIndex;
         Seg_T segment = Seg_new(numWords);
 
@@ -127,6 +125,16 @@ int map_segment(Mem_T memory, unsigned numWords)
         }        
 
         return segIndex;
+
+        // if(!(Stack_is_empty(memory->reusable_indices))){
+        //         segIndex = Stack_pop(memory->reusable_indices);
+        // }
+        // else{
+        //         segIndex = Mem_arr_length(memory->segment_seq);
+        // }
+        // memory->segment_seq = Mem_arr_put(memory->segment_seq, segment, segIndex);
+        // return segIndex;
+
 }
 
 /* 
@@ -180,5 +188,4 @@ int get_segment_length(Mem_T memory, unsigned segIndex)
         int returnVal = Seg_length(Mem_arr_get(memory->segment_seq, segIndex));
         return returnVal;
 }
-
 

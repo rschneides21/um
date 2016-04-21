@@ -21,5 +21,7 @@ extern unsigned Seg_length(Seg_T segment);
 
 extern void print_segment(Seg_T segment);
 
+extern uint32_t *Seg_to_arr(Seg_T segment);
+
 
 #endif
