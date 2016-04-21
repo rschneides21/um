@@ -17,17 +17,28 @@
 
 /*
  * This function takes in a 32-bit word and an integer that is between 0 and 
- * 29 (inclusive).  It will return an integer that represents the desired 
- * register.
+ * 29 (inclusive) that represents the location of registerA.  It will return an
+ * integer that represents the A register.
  */
-int decode_register(uint32_t word, int offset);
+unsigned decode_registerA(uint32_t word);
+unsigned decode_registerA_val(uint32_t word);
+/*
+ * This function takes in a 32-bit word and returns the integer represented by
+ * the B register
+ */
+unsigned decode_registerB(uint32_t word);
 
+/*
+ * This function takes in a 32-bit word and returns the integer represented by
+ * the C register
+ */
+unsigned decode_registerC(uint32_t word);
 /*
  * This function takes in a 32-bit word and return the first four bits 
  * (the opcode) represented as an integer.  The opcode is always represented in
  * the same place in the word, so no offset parameter is required.
  */
-int decode_opcode(uint32_t word);
+unsigned decode_opcode(uint32_t word);
 
 /*
  * This function takes in a 32-bit word and return the 25 bits that 
@@ -35,7 +46,7 @@ int decode_opcode(uint32_t word);
  * represented in the same place in the word, so no offset parameter is 
  * required.
  */
-int decode_value(uint32_t word);
+int decode_value(uint32_t word);	/*Shoudl this be unsigned or does it have to be an int? */
 
 /* flips the endian-ness of a 32 bit word */ 
 uint32_t flip_word(uint32_t word);

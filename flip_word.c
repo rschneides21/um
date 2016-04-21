@@ -9,12 +9,17 @@
  *      By:           Ryan Schneiderman and Matthew Epstein
  */
 
-#include "decode.h"
+#include "flip_word.h"
 #include "assert.h"
+#include "stdint.h"
+#include "stdbool.h" 
 
 #define REGISTER_WIDTH 3
 #define OPCODE_WIDTH 4
 #define VALUE_WIDTH 25
+#define MAX_WIDTH 32
+
+ Except_T Bitpack_Overflow = { "Overflow packing bits" };
 
 
 
@@ -58,6 +63,18 @@ static inline uint32_t Bitpack_getu(uint32_t word, unsigned width, unsigned lsb)
     return result;
 }
 
+static inline bool Bitpack_fitsu(uint32_t n, unsigned width) {
+    /* If the number of bits is greater than or equal to 32, it should 
+     * always 
+     * return true.*/
+    if (width >= MAX_WIDTH) return true;
+    
+    /* unsigned integer range of width bits should be from 0 to (2 ** width 
+     * - 1)*/
+    uint32_t max_val = shift_leftu(1, width);
+    return (n < max_val);
+}
+
 static inline uint32_t Bitpack_newu(uint32_t word, unsigned width, unsigned lsb, 
                             uint32_t value) {
 
@@ -88,17 +105,7 @@ static inline uint32_t Bitpack_newu(uint32_t word, unsigned width, unsigned lsb,
     return result;              
 }
 
-static inline bool Bitpack_fitsu(uint32_t n, unsigned width) {
-    /* If the number of bits is greater than or equal to 32, it should 
-     * always 
-     * return true.*/
-    if (width >= MAX_WIDTH) return true;
-    
-    /* unsigned integer range of width bits should be from 0 to (2 ** width 
-     * - 1)*/
-    uint32_t max_val = shift_leftu(1, width);
-    return (n < max_val);
-}
+
 
 /* 
  * Flips the endian-ness of a 32 bit word. 

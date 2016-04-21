@@ -28,7 +28,7 @@ void Mem_arr_free(Mem_arr memory){
 	free(memory);
 }
 
-Mem_arr Mem_arr_resize(Mem_arr memory){
+static inline Mem_arr Mem_arr_resize(Mem_arr memory){
 	Mem_arr new_array = Mem_arr_new(2 * memory->capacity);
 	unsigned memory_length = memory->length; 
 
@@ -36,7 +36,6 @@ Mem_arr Mem_arr_resize(Mem_arr memory){
 	new_array->length = memory_length;
 
 	for(unsigned i = 0; i < memory_length; i++){
-		//see if new_array->arr[i] = memory->arr[i] works
 		Seg_T segment = Mem_arr_get(memory, i);
 		Seg_T duplicate_segment = Seg_duplicate(segment);
 		new_array->arr[i] = duplicate_segment;
@@ -75,3 +74,7 @@ Mem_arr Mem_arr_addhi(Mem_arr memory, Seg_T segment){
 		return memory;
 	}
 }
+
+
+
+

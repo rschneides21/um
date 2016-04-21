@@ -59,9 +59,10 @@ Mem_T Mem_new(FILE *input)
         int programIndex = map_segment(memory, buffer_size);
 
         /*transfers instructions from buffer to segment 0 in memory*/
-        for(unsigned i = 0; i < buffer_size; i++){
+        for(unsigned i = 0; i < 3; i++){
                 uint32_t word = buffer[i];
                 word = flip_word(word);
+                fprintf(stderr, "word: %x\n", word);
                 store_word(memory, word, programIndex, i);
         }
         free(buffer);

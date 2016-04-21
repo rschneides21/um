@@ -12,7 +12,6 @@ struct Seg_T {
 
 
 Seg_T Seg_new(unsigned numWords){
-	//test make sure this works
 	Seg_T segment = malloc(sizeof(*segment) + (numWords * sizeof(uint32_t)));
 	segment->length = numWords;
 	for(unsigned i = 0; i < numWords; i++){
@@ -22,8 +21,6 @@ Seg_T Seg_new(unsigned numWords){
 }
 
 void Seg_free(Seg_T segment){
-	//assert(segment != NULL && *segment != NULL);
-	//free(segment->arr);
 	free(segment);
 }
 

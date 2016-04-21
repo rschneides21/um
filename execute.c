@@ -11,7 +11,7 @@
  */
 
 #include "execute.h"
-#include "decode.h"
+#include "flip_word.h"
 #include "assert.h"
 #include "opmemory.h"
 
@@ -20,12 +20,79 @@ typedef enum opcodes {CONDITIONAL_MOVE = 0, SEGMENTED_LOAD, SEGMENTED_STORE,
                        MAP_SEGMENT, UNMAP_SEGMENT, OUTPUT, INPUT, LOAD_PROGRAM,
                        LOAD_VALUE} opcodes;
 
-static inline void decode_registers(uint32_t word, int *regA, int *regB, int
-                                                                        *regC){
-        *regA = decode_register(word, 6);
-        *regB = decode_register(word, 3);
-        *regC = decode_register(word, 0);
+/*
+ * This function takes in a 32-bit word and an integer that is between 0 and 
+ * 29 (inclusive) that represents the location of registerA.  It will return an
+ * integer that represents the A register.
+ */
+static inline unsigned decode_registerA(uint32_t word)
+{
+        uint32_t mask = word & 0x1c0;
+        unsigned registerA = mask / 0x40;
+        return registerA;
 }
+
+static inline unsigned decode_registerA_val(uint32_t word){
+        uint32_t mask = word & 0x0e000000;
+        unsigned registerA = mask / 0x02000000;
+        return registerA;
+}
+
+/*
+ * This function takes in a 32-bit word and returns the integer represented by
+ * the B register
+ */
+static inline unsigned decode_registerB(uint32_t word)
+{
+        uint32_t mask = word & 0x38;
+        unsigned registerB = mask / 0x8;
+        return registerB;
+}
+
+/*
+ * This function takes in a 32-bit word and returns the integer represented by
+ * the C register
+ */
+static inline unsigned decode_registerC(uint32_t word)
+{
+        uint32_t mask = 0x7;
+        unsigned registerC = word & mask;   
+        return registerC;       
+}
+
+
+/*
+ * This function will take in a 32-bit word and return the first four bits 
+ * (the opcode) represented as an integer.  The opcode is always represented in
+ * the same place in the word, so no offset parameter is required.
+ */
+static inline unsigned decode_opcode(uint32_t word)
+{
+        uint32_t mask = word & 0xf0000000;
+        unsigned opcode = mask / 0x10000000;
+        return opcode;
+}
+
+/*
+ * This function will take in a 32-bit word and return the 25 bits that 
+ * represent the word’s value.  Like the opcode, the value is always 
+ * represented in the same place in the word, so no offset parameter is 
+ * required.
+ */
+static inline int decode_value(uint32_t word)
+{
+        return(word & 0x1ffffff);
+}
+
+
+static inline void decode_registers(uint32_t word, unsigned *regA, unsigned *regB, unsigned
+                                                                        *regC){
+        *regA = decode_registerA(word);
+        *regB = decode_registerB(word);
+        *regC = decode_registerC(word);
+}
+
+
 
 /* See Purpose in header */
 void execute(Mem_T memory){
@@ -35,11 +102,10 @@ void execute(Mem_T memory){
         int input;
 
         uint32_t regs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-        int regA, regB, regC;
-
+        unsigned regA, regB, regC;
         while(programCounter < programLength) {
                 word = load_word(memory, 0, programCounter);
-                int opcode = decode_opcode(word);
+                unsigned opcode = decode_opcode(word);
                 if(opcode != LOAD_VALUE){
                         decode_registers(word, &regA, &regB, &regC);
                 }
@@ -109,14 +175,12 @@ void execute(Mem_T memory){
                                         fprintf(stderr, "loading into segment 0\n");
                                         load_program(memory, regs[regB]);
                                 }
-                                //fprintf(stderr, "test");
                                 programCounter = regs[regC];
                                 programLength = get_segment_length(memory, 0);
-                                //fprintf(stderr, "program length: %u\n", programLength);
                                 break;
 
                         case LOAD_VALUE:
-                                regs[decode_register(word, 25)] = 
+                                regs[decode_registerA_val(word)] = 
                                                         decode_value(word);
                                 break;
                 }
@@ -126,11 +190,4 @@ void execute(Mem_T memory){
         }
         return;
 }
-
-
-
-
-
-
-
-
+    
